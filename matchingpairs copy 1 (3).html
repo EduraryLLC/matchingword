@@ -1,0 +1,1843 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Match Game</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100%;
+      width: 100%;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .app-container {
+      width: 100%;
+      min-height: 100%;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      margin: 0 0 0.5rem 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      margin: 0;
+      opacity: 0.95;
+    }
+
+    .controls {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .control-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .control-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .control-section h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .theme-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .theme-btn {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .theme-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .theme-btn.active {
+      border-color: #667eea;
+      background: #667eea;
+      color: white;
+    }
+
+    .preset-select {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .preset-group {
+      margin-bottom: 1rem;
+    }
+
+    .preset-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+      color: #555;
+    }
+
+    .preset-group select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: white;
+      cursor: pointer;
+    }
+
+    .custom-pairs {
+      margin-top: 1rem;
+    }
+
+    .custom-pairs h4 {
+      margin: 0 0 0.75rem 0;
+      font-size: 1rem;
+      color: #555;
+    }
+
+    .pair-input {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      align-items: center;
+    }
+
+    .pair-input input {
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .pair-input input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .btn-delete {
+      padding: 0.6rem 1rem;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+
+    .btn-delete:hover {
+      background: #dc2626;
+    }
+
+    .btn-add {
+      padding: 0.6rem 1.5rem;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      transition: background 0.2s;
+      margin-top: 0.5rem;
+    }
+
+    .btn-add:hover {
+      background: #059669;
+    }
+
+    .btn-add:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      max-width: 800px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      aspect-ratio: 1;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 1rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+    .card:hover:not(.flipped):not(.matched) {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    .card.flipped {
+      background: #f3f4f6;
+    }
+
+    .card.matched {
+      background: #d1fae5;
+      cursor: default;
+    }
+
+    .card-back {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 2rem;
+    }
+
+    .game-stats {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 800px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-reset {
+      padding: 0.75rem 2rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+
+    .btn-reset:hover {
+      background: #5568d3;
+    }
+
+    .footer {
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .success-message {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+
+    .success-message h2 {
+      color: #10b981;
+      margin: 0 0 1rem 0;
+      font-size: 2rem;
+    }
+
+    .success-message p {
+      color: #666;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .limit-warning {
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      color: #92400e;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .share-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .share-section h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .share-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 1rem 1.5rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      color: #333;
+    }
+
+    .share-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .share-btn.download {
+      background: #10b981;
+      color: white;
+      border-color: #10b981;
+    }
+
+    .share-btn.download:hover {
+      background: #059669;
+    }
+
+    .share-btn.fullscreen {
+      background: #3b82f6;
+      color: white;
+      border-color: #3b82f6;
+    }
+
+    .share-btn.fullscreen:hover {
+      background: #2563eb;
+    }
+
+    .share-btn.lms {
+      background: #8b5cf6;
+      color: white;
+      border-color: #8b5cf6;
+    }
+
+    .share-btn.lms:hover {
+      background: #7c3aed;
+    }
+
+    .share-btn.print {
+      background: #f59e0b;
+      color: white;
+      border-color: #f59e0b;
+    }
+
+    .share-btn.print:hover {
+      background: #d97706;
+    }
+
+    .share-icon {
+      font-size: 1.5rem;
+    }
+
+    @media print {
+      .controls, .share-section, .btn-reset {
+        display: none !important;
+      }
+      
+      .app-container {
+        padding: 1rem;
+      }
+
+      .header, .student-info-section, .game-stats, .game-board, .footer {
+        break-inside: avoid;
+      }
+
+      body {
+        background: white !important;
+      }
+
+      .game-board {
+        page-break-inside: avoid;
+      }
+    }
+
+    .student-info-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .student-info-section h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+
+    .student-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group label {
+      font-weight: 500;
+      color: #555;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-group input {
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: white;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80%;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      color: #333;
+      font-size: 1.5rem;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      cursor: pointer;
+      color: #666;
+      padding: 0;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      color: #333;
+    }
+
+    .modal-body {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .modal-body h3 {
+      color: #333;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-size: 1.1rem;
+    }
+
+    .modal-body p {
+      margin-bottom: 1rem;
+    }
+
+    .modal-body ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .modal-body li {
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-body code {
+      background: #f3f4f6;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+
+    .notification {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      background: #10b981;
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 500;
+    }
+
+    .notification.show {
+      display: flex;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .game-board {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .preset-select {
+        grid-template-columns: 1fr;
+      }
+
+      .pair-input {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="app-container">
+   <div class="header">
+    <h1 id="gameTitle">Memory Match Game</h1>
+    <p id="instructions">Click cards to find matching pairs</p>
+   </div>
+   <div class="student-info-section">
+    <h3>Student Information</h3>
+    <div class="student-form">
+     <div class="form-group"><label for="studentName" id="studentNameLabel">Student Name:</label> <input type="text" id="studentName" placeholder="Enter your name">
+     </div>
+     <div class="form-group"><label for="studentDate" id="studentDateLabel">Date:</label> <input type="date" id="studentDate">
+     </div>
+     <div class="form-group"><label for="studentClass" id="studentClassLabel">Class:</label> <input type="text" id="studentClass" placeholder="Enter your class">
+     </div>
+    </div>
+   </div>
+   <div class="share-section">
+    <h3>Share &amp; Download Options</h3>
+    <div class="share-buttons"><button class="share-btn download" id="downloadBtn"> <span class="share-icon">⬇️</span> <span>Download HTML File</span> </button> <button class="share-btn print" id="printBtn"> <span class="share-icon">🖨️</span> <span>Print Completed Work</span> </button> <button class="share-btn fullscreen" id="fullscreenBtn"> <span class="share-icon">🖥️</span> <span>Fullscreen Mode</span> </button> <button class="share-btn lms" id="lmsBtn"> <span class="share-icon">📚</span> <span>LMS Instructions</span> </button>
+    </div>
+   </div>
+   <div class="controls">
+    <div class="control-section">
+     <h3>Choose a Theme</h3>
+     <div class="theme-buttons" id="themeButtons"></div>
+    </div>
+    <div class="control-section">
+     <h3>Quick Start: Preset Games</h3>
+     <div class="preset-select">
+      <div class="preset-group"><label for="subjectSelect">Subject</label> <select id="subjectSelect"> <option value="">-- Select Subject --</option> <option value="science">Science</option> <option value="math">Math</option> <option value="english">English</option> <option value="history">History</option> <option value="arts">The Arts</option> <option value="fun">Fun Activities</option> </select>
+      </div>
+      <div class="preset-group"><label for="gradeSelect">Grade Level</label> <select id="gradeSelect"> <option value="">-- Select Grade --</option> <option value="k-2">K-2 (Easy)</option> <option value="3-5">3-5 (Medium)</option> <option value="6-8">6-8 (Hard)</option> <option value="9-12">9-12 (Advanced)</option> </select>
+      </div>
+     </div>
+    </div>
+    <div class="control-section">
+     <h3>Custom Matching Pairs</h3>
+     <div class="custom-pairs">
+      <h4>Add Your Own Pairs</h4>
+      <div id="customPairsList"></div><button class="btn-add" id="addPairBtn">+ Add Matching Pair</button>
+      <div id="limitWarning" class="limit-warning" style="display: none;">
+       Maximum limit of 999 pairs reached. Please delete some pairs first.
+      </div>
+     </div>
+    </div>
+   </div>
+   <div id="successMessage" class="success-message" style="display: none;">
+    <h2>🎉 Congratulations!</h2>
+    <p>You found all the matching pairs!</p>
+   </div>
+   <div class="game-stats">
+    <div class="stats-grid">
+     <div class="stat">
+      <div class="stat-value" id="movesCount">
+       0
+      </div>
+      <div class="stat-label">
+       Moves
+      </div>
+     </div>
+     <div class="stat">
+      <div class="stat-value" id="matchesCount">
+       0
+      </div>
+      <div class="stat-label">
+       Matches
+      </div>
+     </div>
+     <div class="stat">
+      <div class="stat-value" id="timeCount">
+       0:00
+      </div>
+      <div class="stat-label">
+       Time
+      </div>
+     </div>
+    </div><button class="btn-reset" id="resetBtn">Reset Game</button>
+   </div>
+   <div class="game-board" id="gameBoard"></div>
+   <div class="footer">
+    <p id="poweredByText">Powered by Edurary</p>
+   </div>
+  </div>
+  <div class="modal-overlay" id="lmsModal">
+   <div class="modal-content">
+    <div class="modal-header">
+     <h2>LMS Integration Instructions</h2><button class="modal-close" id="closeModal">×</button>
+    </div>
+    <div class="modal-body">
+     <p>You can easily integrate this Memory Match Game into your Learning Management System (LMS). Follow these steps:</p>
+     <h3>Option 1: Upload HTML File</h3>
+     <ul>
+      <li>Click the "Download HTML File" button above to save the game</li>
+      <li>Log into your LMS (Canvas, Blackboard, Moodle, Google Classroom, etc.)</li>
+      <li>Navigate to your course content area</li>
+      <li>Look for an option to upload files or add content</li>
+      <li>Upload the downloaded HTML file</li>
+      <li>The game will be accessible to your students directly in the course</li>
+     </ul>
+     <h3>Option 2: Embed as External Tool</h3>
+     <ul>
+      <li>After downloading, you can host the HTML file on your school's web server</li>
+      <li>Use your LMS's "External Tool" or "Embed" feature</li>
+      <li>Enter the URL where you hosted the file</li>
+      <li>Students will see the game embedded in your course page</li>
+     </ul>
+     <h3>For Whole Class Lessons</h3>
+     <ul>
+      <li>Click the "Fullscreen Mode" button to display the game on your projector or smartboard</li>
+      <li>Students can take turns or work together to solve the memory game</li>
+      <li>Use the theme buttons to match your lesson (e.g., Science with preset content)</li>
+     </ul>
+     <p><strong>Note:</strong> Custom pairs you create are saved in your Canva Sheet and will be included when you download the game.</p>
+    </div>
+   </div>
+  </div>
+  <div class="notification" id="notification"><span>✓</span> <span id="notificationText">Success!</span>
+  </div>
+  <script>
+    const defaultConfig = {
+      game_title: "Memory Match Game",
+      instructions: "Click cards to find matching pairs",
+      powered_by_text: "Powered by Edurary",
+      student_name_label: "Student Name",
+      date_label: "Date",
+      class_label: "Class",
+      background_color: "#667eea",
+      card_back_color: "#764ba2",
+      card_front_color: "#ffffff",
+      matched_card_color: "#d1fae5",
+      button_color: "#667eea"
+    };
+
+    const themes = {
+      default: { name: "Default", bg: "#667eea", cardBack: "#764ba2", cardFront: "#ffffff", matched: "#d1fae5", button: "#667eea" },
+      christmas: { name: "Christmas", bg: "#c41e3a", cardBack: "#165b33", cardFront: "#ffffff", matched: "#86efac", button: "#c41e3a" },
+      easter: { name: "Easter", bg: "#f0abfc", cardBack: "#fbbf24", cardFront: "#ffffff", matched: "#ddd6fe", button: "#f0abfc" },
+      halloween: { name: "Halloween", bg: "#fb923c", cardBack: "#1f2937", cardFront: "#ffffff", matched: "#fbbf24", button: "#fb923c" },
+      thanksgiving: { name: "Thanksgiving", bg: "#d97706", cardBack: "#78350f", cardFront: "#ffffff", matched: "#fef3c7", button: "#d97706" },
+      spring: { name: "Spring Break", bg: "#34d399", cardBack: "#06b6d4", cardFront: "#ffffff", matched: "#bfdbfe", button: "#34d399" },
+      backtoschool: { name: "Back to School", bg: "#3b82f6", cardBack: "#1e40af", cardFront: "#ffffff", matched: "#dbeafe", button: "#3b82f6" }
+    };
+
+    const presetGames = {
+      science: {
+        "k-2": [
+          ["Sun", "Star"], ["Moon", "Satellite"], ["Rain", "Water"], ["Plant", "Flower"],
+          ["Rock", "Stone"], ["Air", "Wind"], ["Day", "Light"], ["Night", "Dark"]
+        ],
+        "3-5": [
+          ["Photosynthesis", "Plant Food"], ["Evaporation", "Water Vapor"], ["Gravity", "Force"],
+          ["Ecosystem", "Community"], ["Conductor", "Metal"], ["Insulator", "Plastic"],
+          ["Carnivore", "Meat Eater"], ["Herbivore", "Plant Eater"]
+        ],
+        "6-8": [
+          ["Cell", "Basic Unit"], ["DNA", "Genetic Code"], ["Mitosis", "Cell Division"],
+          ["Atom", "Smallest Particle"], ["Element", "Pure Substance"], ["Compound", "Combined Elements"],
+          ["Kinetic", "Motion Energy"], ["Potential", "Stored Energy"]
+        ],
+        "9-12": [
+          ["Mitochondria", "Powerhouse"], ["Ribosome", "Protein Factory"], ["Enzyme", "Catalyst"],
+          ["Covalent", "Share Electrons"], ["Ionic", "Transfer Electrons"], ["Equilibrium", "Balance State"],
+          ["Wavelength", "Distance Peak"], ["Frequency", "Waves Per Second"]
+        ]
+      },
+      math: {
+        "k-2": [
+          ["2 + 2", "4"], ["3 + 1", "4"], ["5 - 2", "3"], ["6 - 3", "3"],
+          ["Circle", "Round"], ["Square", "4 Sides"], ["Triangle", "3 Sides"], ["10", "Ten"]
+        ],
+        "3-5": [
+          ["3 × 4", "12"], ["5 × 6", "30"], ["24 ÷ 4", "6"], ["36 ÷ 6", "6"],
+          ["1/2", "0.5"], ["1/4", "0.25"], ["Perimeter", "Border Length"], ["Area", "Inside Space"]
+        ],
+        "6-8": [
+          ["x + 5 = 10", "x = 5"], ["2x = 16", "x = 8"], ["50%", "1/2"],
+          ["Ratio", "Comparison"], ["Proportion", "Equal Ratios"], ["Mean", "Average"],
+          ["Median", "Middle Value"], ["π", "3.14159"]
+        ],
+        "9-12": [
+          ["Quadratic", "ax² + bx + c"], ["Parabola", "U-Shape"], ["sin²+cos²", "1"],
+          ["Derivative", "Rate of Change"], ["Integral", "Area Under"], ["Logarithm", "Exponent Inverse"],
+          ["Matrix", "Number Array"], ["Vector", "Direction Magnitude"]
+        ]
+      },
+      english: {
+        "k-2": [
+          ["Cat", "Meow"], ["Dog", "Woof"], ["Happy", "Smile"], ["Sad", "Cry"],
+          ["Big", "Large"], ["Small", "Tiny"], ["Hot", "Warm"], ["Cold", "Cool"]
+        ],
+        "3-5": [
+          ["Noun", "Person Place"], ["Verb", "Action Word"], ["Adjective", "Describes Noun"],
+          ["Synonym", "Same Meaning"], ["Antonym", "Opposite"], ["Simile", "Like or As"],
+          ["Metaphor", "Direct Comparison"], ["Author", "Writer"]
+        ],
+        "6-8": [
+          ["Theme", "Central Idea"], ["Plot", "Story Events"], ["Character", "Person in Story"],
+          ["Setting", "Time and Place"], ["Conflict", "Problem"], ["Resolution", "Solution"],
+          ["Alliteration", "Repeated Sounds"], ["Personification", "Human Traits"]
+        ],
+        "9-12": [
+          ["Protagonist", "Main Character"], ["Antagonist", "Opposition"], ["Irony", "Unexpected Outcome"],
+          ["Foreshadowing", "Hint Future"], ["Symbolism", "Deeper Meaning"], ["Allegory", "Hidden Message"],
+          ["Rhetoric", "Persuasive Language"], ["Syntax", "Sentence Structure"]
+        ]
+      },
+      history: {
+        "k-2": [
+          ["Flag", "Country Symbol"], ["Holiday", "Special Day"], ["Past", "Before Now"],
+          ["Future", "After Now"], ["Leader", "In Charge"], ["Hero", "Brave Person"],
+          ["Map", "Shows Places"], ["Calendar", "Shows Dates"]
+        ],
+        "3-5": [
+          ["Colony", "Settlement"], ["Revolution", "Big Change"], ["Constitution", "Rules Document"],
+          ["Democracy", "People Rule"], ["Explorer", "Discovers Places"], ["Pioneer", "First Settler"],
+          ["Monument", "Memorial"], ["Artifact", "Old Object"]
+        ],
+        "6-8": [
+          ["Renaissance", "Rebirth Era"], ["Monarchy", "King/Queen Rule"], ["Republic", "Elected Leaders"],
+          ["Revolution", "Overthrow"], ["Amendment", "Change to Law"], ["Ratify", "Approve Officially"],
+          ["Abolish", "End Completely"], ["Expansion", "Growth Territory"]
+        ],
+        "9-12": [
+          ["Imperialism", "Empire Building"], ["Nationalism", "Country Pride"], ["Totalitarian", "Complete Control"],
+          ["Cold War", "Ideological Conflict"], ["Détente", "Tension Easing"], ["Apartheid", "Racial Separation"],
+          ["Globalization", "World Connection"], ["Sovereignty", "Supreme Authority"]
+        ]
+      },
+      arts: {
+        "k-2": [
+          ["Red + Blue", "Purple"], ["Red + Yellow", "Orange"], ["Blue + Yellow", "Green"],
+          ["Paint", "Color Tool"], ["Draw", "Make Lines"], ["Sing", "Make Music"],
+          ["Dance", "Move to Music"], ["Sculpture", "3D Art"]
+        ],
+        "3-5": [
+          ["Primary", "Red Yellow Blue"], ["Secondary", "Orange Green Purple"], ["Harmony", "Sounds Good"],
+          ["Rhythm", "Beat Pattern"], ["Melody", "Musical Line"], ["Portrait", "Face Picture"],
+          ["Landscape", "Scenery Picture"], ["Tempo", "Music Speed"]
+        ],
+        "6-8": [
+          ["Perspective", "Depth View"], ["Proportion", "Size Relation"], ["Texture", "Surface Feel"],
+          ["Dynamics", "Volume Changes"], ["Pitch", "High or Low"], ["Composition", "Arrangement"],
+          ["Abstract", "Non-Realistic"], ["Realism", "Life-Like"]
+        ],
+        "9-12": [
+          ["Chiaroscuro", "Light Dark Contrast"], ["Sfumato", "Soft Blending"], ["Impressionism", "Moment Capture"],
+          ["Baroque", "Dramatic Ornate"], ["Counterpoint", "Independent Melodies"], ["Sonata", "Musical Form"],
+          ["Avant-garde", "Experimental New"], ["Minimalism", "Less is More"]
+        ]
+      },
+      fun: {
+        "k-2": [
+          ["🐱", "Cat"], ["🐶", "Dog"], ["🌞", "Sun"], ["🌙", "Moon"],
+          ["⭐", "Star"], ["🌈", "Rainbow"], ["🍎", "Apple"], ["🍌", "Banana"]
+        ],
+        "3-5": [
+          ["🦁", "Lion"], ["🐘", "Elephant"], ["🚗", "Car"], ["✈️", "Airplane"],
+          ["🏠", "House"], ["🌳", "Tree"], ["🎨", "Art"], ["⚽", "Soccer"]
+        ],
+        "6-8": [
+          ["🎮", "Gaming"], ["📱", "Technology"], ["🎵", "Music"], ["📚", "Reading"],
+          ["🏀", "Basketball"], ["🎭", "Theater"], ["🔬", "Science"], ["🗺️", "Geography"]
+        ],
+        "9-12": [
+          ["💻", "Coding"], ["🎬", "Film"], ["📊", "Data"], ["🌍", "Global"],
+          ["🎓", "Academic"], ["🔭", "Astronomy"], ["🎸", "Music"], ["📝", "Writing"]
+        ]
+      }
+    };
+
+    let gameState = {
+      pairs: [],
+      cards: [],
+      flippedCards: [],
+      matchedPairs: 0,
+      moves: 0,
+      timeSeconds: 0,
+      timerInterval: null,
+      isProcessing: false
+    };
+
+    let currentRecordCount = 0;
+    let allPairs = [];
+
+    const dataHandler = {
+      onDataChanged(data) {
+        allPairs = data;
+        currentRecordCount = data.length;
+        renderCustomPairs();
+        updateLimitWarning();
+      }
+    };
+
+    async function init() {
+      if (window.dataSdk) {
+        const initResult = await window.dataSdk.init(dataHandler);
+        if (!initResult.isOk) {
+          console.error("Failed to initialize data SDK");
+        }
+      }
+
+      renderThemeButtons();
+      setupEventListeners();
+      loadDefaultGame();
+    }
+
+    function renderThemeButtons() {
+      const container = document.getElementById('themeButtons');
+      Object.entries(themes).forEach(([key, theme]) => {
+        const btn = document.createElement('button');
+        btn.className = 'theme-btn' + (key === 'default' ? ' active' : '');
+        btn.textContent = theme.name;
+        btn.dataset.theme = key;
+        btn.onclick = () => applyTheme(key);
+        container.appendChild(btn);
+      });
+    }
+
+    function applyTheme(themeKey) {
+      const theme = themes[themeKey];
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === themeKey);
+      });
+
+      const body = document.body;
+      body.style.background = `linear-gradient(135deg, ${theme.bg} 0%, ${theme.cardBack} 100%)`;
+
+      if (window.elementSdk) {
+        window.elementSdk.setConfig({
+          background_color: theme.bg,
+          card_back_color: theme.cardBack,
+          card_front_color: theme.cardFront,
+          matched_card_color: theme.matched,
+          button_color: theme.button
+        });
+      }
+
+      updateCardColors();
+    }
+
+    function updateCardColors() {
+      const config = window.elementSdk?.config || defaultConfig;
+      document.querySelectorAll('.card').forEach(card => {
+        if (card.classList.contains('matched')) {
+          card.style.background = config.matched_card_color || defaultConfig.matched_card_color;
+        } else if (card.classList.contains('flipped')) {
+          card.style.background = config.card_front_color || defaultConfig.card_front_color;
+        }
+      });
+
+      document.querySelectorAll('.card-back').forEach(back => {
+        back.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, ${config.card_back_color || defaultConfig.card_back_color} 100%)`;
+      });
+    }
+
+    function setupEventListeners() {
+      document.getElementById('subjectSelect').addEventListener('change', handlePresetChange);
+      document.getElementById('gradeSelect').addEventListener('change', handlePresetChange);
+      document.getElementById('addPairBtn').addEventListener('click', handleAddPair);
+      document.getElementById('resetBtn').addEventListener('click', resetGame);
+      document.getElementById('downloadBtn').addEventListener('click', handleDownload);
+      document.getElementById('printBtn').addEventListener('click', handlePrint);
+      document.getElementById('fullscreenBtn').addEventListener('click', handleFullscreen);
+      document.getElementById('lmsBtn').addEventListener('click', handleShowLMSModal);
+      document.getElementById('closeModal').addEventListener('click', handleCloseLMSModal);
+      document.getElementById('lmsModal').addEventListener('click', (e) => {
+        if (e.target.id === 'lmsModal') {
+          handleCloseLMSModal();
+        }
+      });
+      
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('studentDate').value = today;
+    }
+
+    function handlePresetChange() {
+      const subject = document.getElementById('subjectSelect').value;
+      const grade = document.getElementById('gradeSelect').value;
+
+      if (subject && grade && presetGames[subject] && presetGames[subject][grade]) {
+        gameState.pairs = presetGames[subject][grade];
+        startGame();
+      }
+    }
+
+    async function handleAddPair() {
+      if (currentRecordCount >= 999) {
+        return;
+      }
+
+      if (!window.dataSdk) {
+        return;
+      }
+
+      const id = `pair_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const newPair = {
+        id: id,
+        word1: "",
+        word2: "",
+        createdAt: new Date().toISOString()
+      };
+
+      const addBtn = document.getElementById('addPairBtn');
+      addBtn.disabled = true;
+      addBtn.textContent = 'Adding...';
+
+      const result = await window.dataSdk.create(newPair);
+
+      addBtn.disabled = false;
+      addBtn.textContent = '+ Add Matching Pair';
+
+      if (!result.isOk) {
+        showNotification('Failed to add pair. Please try again.');
+      }
+    }
+
+    async function handleDeletePair(record, event) {
+      if (!window.dataSdk) {
+        return;
+      }
+
+      const deleteBtn = event.target;
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = 'Deleting...';
+
+      const result = await window.dataSdk.delete(record);
+
+      deleteBtn.disabled = false;
+      deleteBtn.textContent = '🗑️ Delete';
+
+      if (!result.isOk) {
+        showNotification('Failed to delete pair. Please try again.');
+      }
+    }
+
+    async function handlePairUpdate(record, field, value) {
+      if (!window.dataSdk) {
+        return;
+      }
+
+      const updatedRecord = { ...record, [field]: value };
+      await window.dataSdk.update(updatedRecord);
+    }
+
+    function renderCustomPairs() {
+      const container = document.getElementById('customPairsList');
+      container.innerHTML = '';
+
+      allPairs.forEach(pair => {
+        const pairDiv = document.createElement('div');
+        pairDiv.className = 'pair-input';
+
+        const input1 = document.createElement('input');
+        input1.type = 'text';
+        input1.value = pair.word1;
+        input1.placeholder = 'First word';
+        input1.onchange = (e) => handlePairUpdate(pair, 'word1', e.target.value);
+
+        const input2 = document.createElement('input');
+        input2.type = 'text';
+        input2.value = pair.word2;
+        input2.placeholder = 'Matching word';
+        input2.onchange = (e) => handlePairUpdate(pair, 'word2', e.target.value);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'btn-delete';
+        deleteBtn.textContent = '🗑️ Delete';
+        deleteBtn.onclick = (e) => handleDeletePair(pair, e);
+
+        pairDiv.appendChild(input1);
+        pairDiv.appendChild(input2);
+        pairDiv.appendChild(deleteBtn);
+        container.appendChild(pairDiv);
+      });
+
+      updateGameWithCustomPairs();
+    }
+
+    function updateGameWithCustomPairs() {
+      const validPairs = allPairs.filter(p => p.word1.trim() && p.word2.trim());
+      if (validPairs.length > 0) {
+        gameState.pairs = validPairs.map(p => [p.word1, p.word2]);
+        startGame();
+      }
+    }
+
+    function updateLimitWarning() {
+      const warning = document.getElementById('limitWarning');
+      const addBtn = document.getElementById('addPairBtn');
+      if (currentRecordCount >= 999) {
+        warning.style.display = 'block';
+        addBtn.disabled = true;
+      } else {
+        warning.style.display = 'none';
+        addBtn.disabled = false;
+      }
+    }
+
+    function loadDefaultGame() {
+      gameState.pairs = presetGames.science["k-2"];
+      startGame();
+    }
+
+    function startGame() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+
+      gameState.cards = [];
+      gameState.pairs.forEach(pair => {
+        gameState.cards.push({ value: pair[0], matched: false, id: Math.random() });
+        gameState.cards.push({ value: pair[1], matched: false, id: Math.random() });
+      });
+
+      gameState.cards.sort(() => Math.random() - 0.5);
+      gameState.flippedCards = [];
+      gameState.matchedPairs = 0;
+      gameState.moves = 0;
+      gameState.timeSeconds = 0;
+      gameState.isProcessing = false;
+
+      document.getElementById('successMessage').style.display = 'none';
+      updateStats();
+      renderBoard();
+
+      gameState.timerInterval = setInterval(() => {
+        gameState.timeSeconds++;
+        updateStats();
+      }, 1000);
+    }
+
+    function renderBoard() {
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+
+      gameState.cards.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'card';
+        cardEl.dataset.index = index;
+
+        const cardBack = document.createElement('div');
+        cardBack.className = 'card-back';
+        cardBack.textContent = '?';
+        cardEl.appendChild(cardBack);
+
+        cardEl.onclick = () => handleCardClick(index);
+        board.appendChild(cardEl);
+      });
+
+      updateCardColors();
+    }
+
+    function handleCardClick(index) {
+      if (gameState.isProcessing || gameState.flippedCards.length >= 2) return;
+      
+      const card = gameState.cards[index];
+      if (card.matched || gameState.flippedCards.includes(index)) return;
+
+      const cardEl = document.querySelector(`[data-index="${index}"]`);
+      cardEl.classList.add('flipped');
+      cardEl.textContent = card.value;
+      gameState.flippedCards.push(index);
+
+      if (gameState.flippedCards.length === 2) {
+        gameState.moves++;
+        updateStats();
+        checkMatch();
+      }
+
+      updateCardColors();
+    }
+
+    function checkMatch() {
+      gameState.isProcessing = true;
+      const [index1, index2] = gameState.flippedCards;
+      const card1 = gameState.cards[index1];
+      const card2 = gameState.cards[index2];
+
+      const pairIndex = gameState.pairs.findIndex(pair => 
+        (pair[0] === card1.value && pair[1] === card2.value) ||
+        (pair[1] === card1.value && pair[0] === card2.value)
+      );
+
+      if (pairIndex !== -1) {
+        setTimeout(() => {
+          card1.matched = true;
+          card2.matched = true;
+          document.querySelector(`[data-index="${index1}"]`).classList.add('matched');
+          document.querySelector(`[data-index="${index2}"]`).classList.add('matched');
+          gameState.matchedPairs++;
+          updateStats();
+          gameState.flippedCards = [];
+          gameState.isProcessing = false;
+          updateCardColors();
+
+          if (gameState.matchedPairs === gameState.pairs.length) {
+            clearInterval(gameState.timerInterval);
+            document.getElementById('successMessage').style.display = 'block';
+          }
+        }, 500);
+      } else {
+        setTimeout(() => {
+          const cardEl1 = document.querySelector(`[data-index="${index1}"]`);
+          const cardEl2 = document.querySelector(`[data-index="${index2}"]`);
+          cardEl1.classList.remove('flipped');
+          cardEl2.classList.remove('flipped');
+          cardEl1.innerHTML = '<div class="card-back">?</div>';
+          cardEl2.innerHTML = '<div class="card-back">?</div>';
+          gameState.flippedCards = [];
+          gameState.isProcessing = false;
+          updateCardColors();
+        }, 1000);
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('movesCount').textContent = gameState.moves;
+      document.getElementById('matchesCount').textContent = gameState.matchedPairs;
+      const minutes = Math.floor(gameState.timeSeconds / 60);
+      const seconds = gameState.timeSeconds % 60;
+      document.getElementById('timeCount').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function resetGame() {
+      startGame();
+    }
+
+    function handlePrint() {
+      window.print();
+    }
+
+    function handleDownload() {
+      const config = window.elementSdk?.config || defaultConfig;
+      const currentTheme = getCurrentTheme();
+      const currentPairs = gameState.pairs.length > 0 ? gameState.pairs : presetGames.science["k-2"];
+      const studentName = document.getElementById('studentName').value;
+      const studentDate = document.getElementById('studentDate').value;
+      const studentClass = document.getElementById('studentClass').value;
+
+      const htmlContent = generateStandaloneHTML(config, currentTheme, currentPairs, studentName, studentDate, studentClass);
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'memory-match-game.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      showNotification('Game downloaded successfully!');
+    }
+
+    function getCurrentTheme() {
+      const config = window.elementSdk?.config || defaultConfig;
+      for (const [key, theme] of Object.entries(themes)) {
+        if (theme.bg === config.background_color && theme.cardBack === config.card_back_color) {
+          return key;
+        }
+      }
+      return 'default';
+    }
+
+    function generateStandaloneHTML(config, theme, pairs, studentName, studentDate, studentClass) {
+      const themeData = themes[theme];
+      const pairsJSON = JSON.stringify(pairs);
+      
+      const escapeHtml = (str) => {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      };
+
+      const scriptContent = `
+    (function() {
+      var pairs = ${pairsJSON};
+      var gameState = {
+        cards: [],
+        flippedCards: [],
+        matchedPairs: 0,
+        moves: 0,
+        timeSeconds: 0,
+        timerInterval: null,
+        isProcessing: false
+      };
+
+      function startGame() {
+        if (gameState.timerInterval) {
+          clearInterval(gameState.timerInterval);
+        }
+        gameState.cards = [];
+        for (var i = 0; i < pairs.length; i++) {
+          gameState.cards.push({ value: pairs[i][0], matched: false, id: Math.random() });
+          gameState.cards.push({ value: pairs[i][1], matched: false, id: Math.random() });
+        }
+        gameState.cards.sort(function() { return Math.random() - 0.5; });
+        gameState.flippedCards = [];
+        gameState.matchedPairs = 0;
+        gameState.moves = 0;
+        gameState.timeSeconds = 0;
+        gameState.isProcessing = false;
+        var successMsg = document.getElementById('successMessage');
+        if (successMsg) {
+          successMsg.classList.remove('show');
+        }
+        updateStats();
+        renderBoard();
+        gameState.timerInterval = setInterval(function() {
+          gameState.timeSeconds++;
+          updateStats();
+        }, 1000);
+      }
+
+      function renderBoard() {
+        var board = document.getElementById('gameBoard');
+        if (!board) return;
+        board.innerHTML = '';
+        for (var i = 0; i < gameState.cards.length; i++) {
+          (function(index) {
+            var cardEl = document.createElement('div');
+            cardEl.className = 'card';
+            cardEl.setAttribute('data-index', index);
+            var cardBack = document.createElement('div');
+            cardBack.className = 'card-back';
+            cardBack.textContent = '?';
+            cardEl.appendChild(cardBack);
+            cardEl.onclick = function() { handleCardClick(index); };
+            board.appendChild(cardEl);
+          })(i);
+        }
+      }
+
+      function handleCardClick(index) {
+        if (gameState.isProcessing || gameState.flippedCards.length >= 2) return;
+        var card = gameState.cards[index];
+        if (card.matched || gameState.flippedCards.indexOf(index) !== -1) return;
+        var cardEl = document.querySelector('[data-index="' + index + '"]');
+        if (!cardEl) return;
+        cardEl.classList.add('flipped');
+        cardEl.textContent = card.value;
+        gameState.flippedCards.push(index);
+        if (gameState.flippedCards.length === 2) {
+          gameState.moves++;
+          updateStats();
+          checkMatch();
+        }
+      }
+
+      function checkMatch() {
+        gameState.isProcessing = true;
+        var index1 = gameState.flippedCards[0];
+        var index2 = gameState.flippedCards[1];
+        var card1 = gameState.cards[index1];
+        var card2 = gameState.cards[index2];
+        var pairIndex = -1;
+        for (var i = 0; i < pairs.length; i++) {
+          var pair = pairs[i];
+          if ((pair[0] === card1.value && pair[1] === card2.value) ||
+              (pair[1] === card1.value && pair[0] === card2.value)) {
+            pairIndex = i;
+            break;
+          }
+        }
+        if (pairIndex !== -1) {
+          setTimeout(function() {
+            card1.matched = true;
+            card2.matched = true;
+            var cardEl1 = document.querySelector('[data-index="' + index1 + '"]');
+            var cardEl2 = document.querySelector('[data-index="' + index2 + '"]');
+            if (cardEl1) cardEl1.classList.add('matched');
+            if (cardEl2) cardEl2.classList.add('matched');
+            gameState.matchedPairs++;
+            updateStats();
+            gameState.flippedCards = [];
+            gameState.isProcessing = false;
+            if (gameState.matchedPairs === pairs.length) {
+              clearInterval(gameState.timerInterval);
+              var successMsg = document.getElementById('successMessage');
+              if (successMsg) {
+                successMsg.classList.add('show');
+              }
+            }
+          }, 500);
+        } else {
+          setTimeout(function() {
+            var cardEl1 = document.querySelector('[data-index="' + index1 + '"]');
+            var cardEl2 = document.querySelector('[data-index="' + index2 + '"]');
+            if (cardEl1) {
+              cardEl1.classList.remove('flipped');
+              cardEl1.innerHTML = '<div class="card-back">?<\\/div>';
+            }
+            if (cardEl2) {
+              cardEl2.classList.remove('flipped');
+              cardEl2.innerHTML = '<div class="card-back">?<\\/div>';
+            }
+            gameState.flippedCards = [];
+            gameState.isProcessing = false;
+          }, 1000);
+        }
+      }
+
+      function updateStats() {
+        var movesEl = document.getElementById('movesCount');
+        var matchesEl = document.getElementById('matchesCount');
+        var timeEl = document.getElementById('timeCount');
+        if (movesEl) movesEl.textContent = gameState.moves;
+        if (matchesEl) matchesEl.textContent = gameState.matchedPairs;
+        if (timeEl) {
+          var minutes = Math.floor(gameState.timeSeconds / 60);
+          var seconds = gameState.timeSeconds % 60;
+          var secondsStr = seconds < 10 ? '0' + seconds : '' + seconds;
+          timeEl.textContent = minutes + ':' + secondsStr;
+        }
+      }
+
+      var resetBtn = document.getElementById('resetBtn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', startGame);
+      }
+      
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startGame);
+      } else {
+        startGame();
+      }
+    })();
+  `;
+
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(config.game_title || defaultConfig.game_title)}</title>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, ${themeData.bg} 0%, ${themeData.cardBack} 100%);
+      min-height: 100vh;
+      width: 100%;
+    }
+    * { box-sizing: border-box; }
+    .app-container {
+      width: 100%;
+      min-height: 100vh;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 2rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .header h1 {
+      font-size: 2.5rem;
+      margin: 0 0 0.5rem 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .header p {
+      font-size: 1.1rem;
+      margin: 0;
+      opacity: 0.95;
+    }
+    .student-info {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 1200px;
+    }
+    .student-info h3 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+      color: #333;
+    }
+    .student-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .student-detail {
+      display: flex;
+      flex-direction: column;
+    }
+    .student-detail strong {
+      color: #555;
+      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+    }
+    .student-detail span {
+      color: #333;
+      font-size: 1rem;
+    }
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      max-width: 800px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+    .card {
+      aspect-ratio: 1;
+      background: white;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 1rem;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .card:hover:not(.flipped):not(.matched) {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    .card.flipped { background: ${themeData.cardFront}; }
+    .card.matched { background: ${themeData.matched}; cursor: default; }
+    .card-back {
+      background: linear-gradient(135deg, ${themeData.bg} 0%, ${themeData.cardBack} 100%);
+      color: white;
+      font-size: 2rem;
+    }
+    .game-stats {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 800px;
+      width: 100%;
+      margin-bottom: 2rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+    }
+    .stat { display: flex; flex-direction: column; align-items: center; }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: ${themeData.button};
+      margin-bottom: 0.25rem;
+    }
+    .stat-label {
+      font-size: 0.9rem;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-reset {
+      padding: 0.75rem 2rem;
+      background: ${themeData.button};
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+    .success-message {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+      margin-bottom: 2rem;
+      display: none;
+    }
+    .success-message.show { display: block; }
+    .success-message h2 {
+      color: #10b981;
+      margin: 0 0 1rem 0;
+      font-size: 2rem;
+    }
+    .footer {
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    @media (max-width: 768px) {
+      .game-board { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+      .stats-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .header h1 { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="header">
+      <h1>${escapeHtml(config.game_title || defaultConfig.game_title)}</h1>
+      <p>${escapeHtml(config.instructions || defaultConfig.instructions)}</p>
+    </div>
+    <div class="student-info">
+      <h3>Student Information</h3>
+      <div class="student-details">
+        <div class="student-detail">
+          <strong>${escapeHtml(config.student_name_label || defaultConfig.student_name_label)}:</strong>
+          <span>${escapeHtml(studentName) || 'Not provided'}</span>
+        </div>
+        <div class="student-detail">
+          <strong>${escapeHtml(config.date_label || defaultConfig.date_label)}:</strong>
+          <span>${escapeHtml(studentDate) || 'Not provided'}</span>
+        </div>
+        <div class="student-detail">
+          <strong>${escapeHtml(config.class_label || defaultConfig.class_label)}:</strong>
+          <span>${escapeHtml(studentClass) || 'Not provided'}</span>
+        </div>
+      </div>
+    </div>
+    <div id="successMessage" class="success-message">
+      <h2>🎉 Congratulations!</h2>
+      <p>You found all the matching pairs!</p>
+    </div>
+    <div class="game-stats">
+      <div class="stats-grid">
+        <div class="stat">
+          <div class="stat-value" id="movesCount">0</div>
+          <div class="stat-label">Moves</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="matchesCount">0</div>
+          <div class="stat-label">Matches</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="timeCount">0:00</div>
+          <div class="stat-label">Time</div>
+        </div>
+      </div>
+      <button class="btn-reset" id="resetBtn">Reset Game</button>
+    </div>
+    <div class="game-board" id="gameBoard"></div>
+    <div class="footer">
+      <p>${escapeHtml(config.powered_by_text || defaultConfig.powered_by_text)}</p>
+    </div>
+  </div>
+  <script>${scriptContent}<\/script>
+</body>
+</html>`;
+    }
+
+    function handleFullscreen() {
+      const elem = document.documentElement;
+      if (!document.fullscreenElement) {
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen();
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        }
+        showNotification('Entered fullscreen mode');
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+        showNotification('Exited fullscreen mode');
+      }
+    }
+
+    function handleShowLMSModal() {
+      document.getElementById('lmsModal').classList.add('active');
+    }
+
+    function handleCloseLMSModal() {
+      document.getElementById('lmsModal').classList.remove('active');
+    }
+
+    function showNotification(message) {
+      const notification = document.getElementById('notification');
+      const notificationText = document.getElementById('notificationText');
+      notificationText.textContent = message;
+      notification.classList.add('show');
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
+    }
+
+    async function onConfigChange(config) {
+      const titleEl = document.getElementById('gameTitle');
+      const instructionsEl = document.getElementById('instructions');
+      const poweredByEl = document.getElementById('poweredByText');
+      const resetBtn = document.getElementById('resetBtn');
+      const studentNameLabel = document.getElementById('studentNameLabel');
+      const studentDateLabel = document.getElementById('studentDateLabel');
+      const studentClassLabel = document.getElementById('studentClassLabel');
+
+      titleEl.textContent = config.game_title || defaultConfig.game_title;
+      instructionsEl.textContent = config.instructions || defaultConfig.instructions;
+      poweredByEl.textContent = config.powered_by_text || defaultConfig.powered_by_text;
+      studentNameLabel.textContent = (config.student_name_label || defaultConfig.student_name_label) + ':';
+      studentDateLabel.textContent = (config.date_label || defaultConfig.date_label) + ':';
+      studentClassLabel.textContent = (config.class_label || defaultConfig.class_label) + ':';
+
+      const bgColor = config.background_color || defaultConfig.background_color;
+      const cardBackColor = config.card_back_color || defaultConfig.card_back_color;
+      document.body.style.background = `linear-gradient(135deg, ${bgColor} 0%, ${cardBackColor} 100%)`;
+
+      const buttonColor = config.button_color || defaultConfig.button_color;
+      resetBtn.style.background = buttonColor;
+
+      updateCardColors();
+    }
+
+    function mapToCapabilities(config) {
+      return {
+        recolorables: [
+          {
+            get: () => config.background_color || defaultConfig.background_color,
+            set: (value) => {
+              config.background_color = value;
+              window.elementSdk.setConfig({ background_color: value });
+            }
+          },
+          {
+            get: () => config.card_back_color || defaultConfig.card_back_color,
+            set: (value) => {
+              config.card_back_color = value;
+              window.elementSdk.setConfig({ card_back_color: value });
+            }
+          },
+          {
+            get: () => config.card_front_color || defaultConfig.card_front_color,
+            set: (value) => {
+              config.card_front_color = value;
+              window.elementSdk.setConfig({ card_front_color: value });
+            }
+          },
+          {
+            get: () => config.matched_card_color || defaultConfig.matched_card_color,
+            set: (value) => {
+              config.matched_card_color = value;
+              window.elementSdk.setConfig({ matched_card_color: value });
+            }
+          },
+          {
+            get: () => config.button_color || defaultConfig.button_color,
+            set: (value) => {
+              config.button_color = value;
+              window.elementSdk.setConfig({ button_color: value });
+            }
+          }
+        ],
+        borderables: [],
+        fontEditable: undefined,
+        fontSizeable: undefined
+      };
+    }
+
+    function mapToEditPanelValues(config) {
+      return new Map([
+        ["game_title", config.game_title || defaultConfig.game_title],
+        ["instructions", config.instructions || defaultConfig.instructions],
+        ["powered_by_text", config.powered_by_text || defaultConfig.powered_by_text],
+        ["student_name_label", config.student_name_label || defaultConfig.student_name_label],
+        ["date_label", config.date_label || defaultConfig.date_label],
+        ["class_label", config.class_label || defaultConfig.class_label]
+      ]);
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities,
+        mapToEditPanelValues
+      });
+    }
+
+    init();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a963cc6e1486b5a',t:'MTc2NDk2NTk1NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
