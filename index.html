@@ -1709,25 +1709,6 @@
 </html>`;
     }
 
-    function handleFullscreen() {
-      const elem = document.documentElement;
-      if (!document.fullscreenElement) {
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen();
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
-        } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen();
-        }
-        showNotification('Entered fullscreen mode');
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-        showNotification('Exited fullscreen mode');
-      }
-    }
-
     function handleShowLMSModal() {
       document.getElementById('lmsModal').classList.add('active');
     }
